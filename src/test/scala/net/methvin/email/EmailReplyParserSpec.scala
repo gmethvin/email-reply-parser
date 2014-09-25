@@ -69,10 +69,10 @@ class EmailReplyParserSpec extends Specification {
           |riak-users@lists.basho.com
           |http://lists.basho.com/mailman/listinfo/riak-users_lists.basho.com""".stripMargin
       val parsed = parse(body)
-      val parts = EmailReplyParser(body).parts
-      parts.map(_.quoted) must_== Seq(false, true, false, true, false, false)
-      parts.map(_.signature) must_== Seq(false, false, false, false, false, true)
-      parts.map(_.hidden) must_== Seq(false, false, false, true, true, true)
+      val fragments = EmailReplyParser(body).fragments
+      fragments.map(_.quoted) must_== Seq(false, true, false, true, false, false)
+      fragments.map(_.signature) must_== Seq(false, false, false, false, false, true)
+      fragments.map(_.hidden) must_== Seq(false, false, false, true, true, true)
       parsed must contain("http://wiki.basho.com/REST-API.html#Bucket-operations")
       parsed must contain("You can list the keys for the bucket and call delete for each.")
     }
@@ -138,7 +138,7 @@ class EmailReplyParserSpec extends Specification {
         """Oh thanks.
           |
           |Having the function would be great.""".stripMargin
-      EmailReplyParser(body).parts must haveLength(5)
+      EmailReplyParser(body).fragments must haveLength(5)
     }
 
     "capture date string" in {
@@ -148,11 +148,11 @@ class EmailReplyParserSpec extends Specification {
           |On Aug 22, 2011, at 7:37 PM, defunkt<reply@reply.github.com> wrote:
           |
           |> Loader seems to be working well""".stripMargin
-      val parts = EmailReplyParser(body).parts
-      parts should haveLength(2)
-      parts(0).content must contain("Awesome")
-      parts(1).content must contain("On")
-      parts(1).content must contain("Loader")
+      val fragments = EmailReplyParser(body).fragments
+      fragments should haveLength(2)
+      fragments(0).content must contain("Awesome")
+      fragments(1).content must contain("On")
+      fragments(1).content must contain("Loader")
       parse(body) must_== "Awesome! I haven't had another problem with it."
     }
 
@@ -173,7 +173,7 @@ class EmailReplyParserSpec extends Specification {
           |
           |This is a paragraph that talks about a bunch of stuff. It goes on and on
           |for a while.""".stripMargin
-      EmailReplyParser(body).parts must haveLength(1)
+      EmailReplyParser(body).fragments must haveLength(1)
       parse(body) must_== body
       parse(body, sigs = true) must_== body
     }
@@ -195,11 +195,11 @@ class EmailReplyParserSpec extends Specification {
           |> ---
           |> Reply to this email directly or view it on GitHub:
           |> https://github.com/github/github/issues/2278#issuecomment-3182418""".stripMargin
-      val parts = EmailReplyParser(body).parts
+      val fragments = EmailReplyParser(body).fragments
       parse(body) must_== "I get proper rendering as well."
-      parts(0).content must contain("I get")
-      parts(1).signature must beTrue
-      parts(1).content must contain("Sent from")
+      fragments(0).content must contain("I get")
+      fragments(1).signature must beTrue
+      fragments(1).content must contain("Sent from")
     }
 
     "read signature correctly" in {
@@ -208,12 +208,12 @@ class EmailReplyParserSpec extends Specification {
           |
           |--
           |rick""".stripMargin
-      val parts = EmailReplyParser(body).parts
-      parts must haveLength(2)
-      parts.map(_.quoted) must_== Seq(false, false)
-      parts.map(_.signature) must_== Seq(false, true)
-      parts.map(_.hidden) must_== Seq(false, true)
-      parts(1).content must contain("--")
+      val fragments = EmailReplyParser(body).fragments
+      fragments must haveLength(2)
+      fragments.map(_.quoted) must_== Seq(false, false)
+      fragments.map(_.signature) must_== Seq(false, true)
+      fragments.map(_.hidden) must_== Seq(false, true)
+      fragments(1).content must contain("--")
     }
 
     "deal with windows line endings" in {
